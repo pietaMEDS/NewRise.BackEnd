@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UserUpdateRequest;
+use App\Http\Resources\UserStatisticResource;
+use App\Models\Logs;
 use App\Models\ProfileImage;
 use App\Models\Role;
 use App\Models\RoleAccess;
@@ -12,6 +14,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Pusher\Pusher;
 
 class UserController extends Controller
 {
@@ -19,6 +23,55 @@ class UserController extends Controller
     public function index()
     {
         return UserResource::collection(User::all());
+    }
+
+
+    public function statisticShow()
+    {
+        return UserStatisticResource::collection(User::all());
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        Log::info('Image Load:', $request->all());
+
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $user = auth()->guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if ($file = $request->file('file')) {
+            $imagePath = Storage::disk('public')->put('avatars', $file);
+            $publicUrl = url(Storage::url($imagePath));
+
+            $avatar = ProfileImage::where('user_id', $user->id)->first();
+            if ($avatar != null) {
+                $avatar->update(['path' => $publicUrl]);
+
+                Logs::create([
+                    'user_id' => $user->id,
+                    'type' => 'update_profileImage',
+                    'data' => json_encode($avatar),
+                ]);
+            } else {
+                $avatar = ProfileImage::create([
+                    'user_id' => $user->id,
+                    'path' => $publicUrl
+                ]);
+
+                Logs::create([
+                    'user_id' => $user->id,
+                    'type' => 'create_profileImage',
+                    'data' => json_encode($avatar),
+                ]);
+            }
+        }
+
+        return response()->json(['path' => $publicUrl]);
     }
 
     public function updateSelected(UserUpdateRequest $request, string $id)
@@ -45,6 +98,12 @@ class UserController extends Controller
             ]));
         }
 
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'update_user',
+            'data' => json_encode($user),
+        ]);
+
         return response()->json([
             'user' => UserResource::make($user),
         ]);
@@ -53,7 +112,6 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
-
         $validated = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string|min:6',
@@ -67,6 +125,12 @@ class UserController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        Logs::create([
+            'user_id' => $user->id,
+            'type' => 'login_user',
+            'data' => json_encode($user),
+        ]);
 
         return response()->json([
             'user' => UserResource::make($user),
@@ -97,6 +161,12 @@ class UserController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        Logs::create([
+            'user_id' => $user->id,
+            'type' => 'create_user',
+            'data' => json_encode($user),
+        ]);
+
         return response()->json([
             'user' => UserResource::make($user),
             'token' => $token
@@ -109,10 +179,12 @@ class UserController extends Controller
     }
 
 
-    public function profile()
+    public function profile(string $id)
     {
-        return auth()->guard('sanctum')->user();
-        // return UserResource::make(auth()->guard('sanctum')->user());
+        if ($id) {
+            return UserResource::make(User::find($id));
+        } else
+            return UserResource::make(User::find(auth()->guard('sanctum')->id()));
     }
 
     public function update(UserUpdateRequest $request)
@@ -134,27 +206,39 @@ class UserController extends Controller
         $avatar = ProfileImage::where('user_id', $user->id)->first();
 
         if ($avatar != null && $request['avatar'] != null) {
-            $avatar->update(['path' => $request['avatar']]);
+            $avatar->update(['path' => $request['avatar']['path']]);
+
+            Logs::create([
+                'user_id' => auth()->guard('sanctum')->user()->id,
+                'type' => 'update_profileImage',
+                'data' => json_encode($avatar),
+            ]);
+        } elseif ($request['avatar'] != null) {
+            $avatar = ProfileImage::create([
+                'user_id' => $user->id,
+                'path' => $request['avatar']['path']
+            ]);
+
+            Logs::create([
+                'user_id' => auth()->guard('sanctum')->user()->id,
+                'type' => 'create_profileImage',
+                'data' => json_encode($avatar),
+            ]);
         }
-        elseif($request['avatar'] != null){
-        ProfileImage::create([
-            'user_id' => $user->id,
-            'path' => $request['avatar']
+
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'update_user',
+            'data' => json_encode($user),
         ]);
-        }
 
         return response()->json([
             'user' => UserResource::make($user),
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-
-
         $SelectedUser = User::find($id);
 
         if (!$SelectedUser) {
@@ -165,10 +249,16 @@ class UserController extends Controller
 
         $role = Role::find(RoleAccess::where('user_id', $user->id)->first()->role_id);
 
-        if ($user && $role->priority > 20) { // Assuming rank_id 1 is for admin
+        if ($user && $role->priority > 20) {
+
+            Logs::create([
+                'user_id' => auth()->guard('sanctum')->user()->id,
+                'type' => 'delete_user',
+                'data' => json_encode($user),
+            ]);
+
             $SelectedUser->delete();
         }
-
 
         return response()->json(['message' => 'User deleted successfully'], 200);
     }

@@ -9,24 +9,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class MessageResource extends JsonResource
+class MessageStatisticResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
-        if ($this->status == "deleted") {
-            return [
-                'id'=>$this->id,
-                'text'=>"Сообщение было удалено",
-                'status' => $this->status,
-                'creator'=>UserResource::make(User::find($this->user_id)),
-            ];
-        }
-
         return [
             'id'=>$this->id,
             'text'=>$this->text,

@@ -5,42 +5,49 @@ namespace App\Http\Controllers;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use App\Http\Requests\MessagesCreateRequest;
+use App\Http\Resources\MessageStatisticResource;
+use App\Models\Logs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Events\MessageSent;
+use Pusher\Pusher;
 
 class MessageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index($forum_id)
     {
         return MessageResource::collection(Message::where('forum_id', $forum_id)->get());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function statisticShow(Request $request)
     {
-        //
+        return MessageStatisticResource::collection(Message::all());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // public function store(MessagesCreateRequest $request)
+    // {
+    //     try {
+    //         $options = array(
+    //             'cluster' => 'eu',
+    //             'useTLS' => true,
+    //             'curl_options' => [
+    //                 CURLOPT_SSL_VERIFYHOST => 0,
+    //                 CURLOPT_SSL_VERIFYPEER => 0
+    //             ]
+    //         );
+
+    //     $pusher->trigger('my-channel', 'my-event', [
+
+    //         'message' => 'hello world'
+
+    //       ]);
+    // }
+
     public function store(MessagesCreateRequest $request)
     {
         $validated = $request->validated();
 
-        // Check if 'message_id' exists and is not null
-        if (array_key_exists('message_id', $validated) && $validated['message_id'] !== null) {
-            // Handle the logic for when message_id is present
-            // For example, you might want to set visibility or perform some action
-            // $visibilityMessage = Message::find($validated['message_id']);
-            // Perform actions based on the visibilityMessage if needed
-        }
-
-        // Create the new message
         $message = Message::create([
             'forum_id' => $validated['forum_id'],
             'user_id' => auth()->guard('sanctum')->user()->id, // Assuming the user is authenticated
@@ -48,33 +55,41 @@ class MessageController extends Controller
             'message_id' => $validated['message_id'] ?? null, // Set to null if not provided
         ]);
 
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'create_message',
+            'data' => json_encode($message),
+        ]);
+
+            $options = array(
+                'cluster' => 'eu',
+                'useTLS' => true,
+                'curl_options' => [
+                    CURLOPT_SSL_VERIFYHOST => 0,
+                    CURLOPT_SSL_VERIFYPEER => 0
+                ]
+            );
+
+            $pusher = new Pusher(
+                env('PUSHER_APP_KEY'),
+                env('PUSHER_APP_SECRET'),
+                env('PUSHER_APP_ID'),
+                $options
+            );
+
+            $pusher->trigger('forum-chat-' . $request->forum_id, 'new-post', [
+                'post' => new MessageResource($message)
+            ]);
+
         return response()->json([
             'message' => new MessageResource($message),
         ], 201);
-    }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
+    // }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(MessagesCreateRequest $request, string $id)
     {
-        // \Log::info('Request data:', $request->all());
         $message = Message::find($id); // Find the message or fail if not found
         $validated = $request->validated();
 
@@ -82,18 +97,74 @@ class MessageController extends Controller
             'text' => $validated['text'],
         ]);
 
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'update_message',
+            'data' => json_encode($message),
+        ]);
+
+        $options = array(
+            'cluster' => 'eu',
+            'useTLS' => true,
+            'curl_options' => [
+                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => 0
+            ]
+        );
+
+        $pusher = new Pusher(
+            env('PUSHER_APP_KEY'),
+            env('PUSHER_APP_SECRET'),
+            env('PUSHER_APP_ID'),
+            $options
+        );
+
+        $pusher->trigger('forum-chat-' . $message->forum_id, 'updated-post', [
+            'post' => new MessageResource($message)
+        ]);
+
         return response()->json([
             'message' => new MessageResource($message),
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        $message = Message::findOrFail($id); // Find the message or fail if not found
-        $message->delete(); // Delete the message
+        Log::info('Attempting to delete message with ID: ' . $id);
+
+        $message = Message::find($id); // Find the message or fail if not found
+        $message->update([
+            'status' => 'deleted',
+        ]);
+
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'delete_message',
+            'data' => json_encode($message),
+        ]);
+
+        Log::info(`Message with ID: ` . $id . ` has been successfully archived.
+        data: ` . $message);
+
+        $options = array(
+            'cluster' => 'eu',
+            'useTLS' => true,
+            'curl_options' => [
+                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => 0
+            ]
+        );
+
+        $pusher = new Pusher(
+            env('PUSHER_APP_KEY'),
+            env('PUSHER_APP_SECRET'),
+            env('PUSHER_APP_ID'),
+            $options
+        );
+
+        $pusher->trigger('forum-chat-' . $message->forum_id, 'delete-post', [
+            'post' => new MessageResource($message)
+        ]);
 
         return response()->json([
             'message' => 'Message deleted successfully.',

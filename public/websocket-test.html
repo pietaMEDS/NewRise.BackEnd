@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Enable pusher logging - don't include this in production
+        Pusher.logToConsole = true;
+
+        const pusher = new Pusher('c99fad2f51f6408f6964', {
+            cluster: 'eu'
+        });
+
+        const channel = pusher.subscribe('my-channel');
+        channel.bind('my-event', function(data) {
+            const messagesList = document.getElementById('messages');
+            const li = document.createElement('li');
+            li.textContent = data.message;
+            messagesList.appendChild(li);
+        });
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            
+            // Get CSRF token
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            fetch('http://localhost:8000/api/broadcast-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <input type="text" id="message" placeholder="Enter your message">
+    <button onclick="sendMessage()">Send Message</button>
+    <h2>Messages:</h2>
+    <ul id="messages"></ul>
+</body>
+</html>

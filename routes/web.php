@@ -10,3 +10,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/websocket-test', function () {
+    return view('websocket-test');
+});
+
+Route::get('/websocket-test', function () {
+    return view('websocket-test');
+});

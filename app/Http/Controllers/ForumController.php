@@ -6,6 +6,7 @@ use App\Http\Requests\CreateForumRequest;
 use App\Http\Resources\ForumResource;
 use App\Http\Resources\UserResource;
 use App\Models\Forum;
+use App\Models\Logs;
 use Illuminate\Http\Request;
 
 class ForumController extends Controller
@@ -30,6 +31,12 @@ class ForumController extends Controller
             'description' => $request->validated()['description'],
             'theme_id' => $request->validated()['theme_id'],
             'user_id' => auth()->guard('sanctum')->user()->id,
+        ]);
+
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => "create_forum",
+            'data' => json_encode($forum),
         ]);
 
         return response()->json(new ForumResource($forum), 201);

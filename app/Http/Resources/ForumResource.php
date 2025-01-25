@@ -17,7 +17,7 @@ class ForumResource extends JsonResource
             'id'=>$this->id,
             'name'=>$this->name,
             'desc'=>$this->description,
-            'postsCount'=>Message::where('forum_id', $this->id)->count(),
+            'postsCount'=>Message::where('forum_id', $this->id)->where('status','!=','deleted')->count(),
             'creator'=>UserResource::make(User::find($this->user_id)),
             'theme'=>ThemeResource::make(Theme::find($this->theme_id)),
         ];
