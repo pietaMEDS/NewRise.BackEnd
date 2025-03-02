@@ -7,13 +7,59 @@ use App\Models\Message;
 use App\Http\Requests\MessagesCreateRequest;
 use App\Http\Resources\MessageStatisticResource;
 use App\Models\Logs;
+use App\Models\progress_actions;
+use App\Models\Rank;
+use App\Models\rank_progresses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Events\MessageSent;
 use Pusher\Pusher;
 
 class MessageController extends Controller
 {
+
+    public function Progress_make($user, $action){
+        $progress_data = progress_actions::where("name", $action)->first();
+        if($progress_data->method){
+            $xp = $progress_data->xp;
+        } else {
+            $xp = $progress_data->xp * -1;
+        }
+
+        $progress = rank_progresses::where('user_id', $user->id)->first();
+
+        if($progress){
+            if ($progress->current_xp + $xp > $progress->max_xp) {
+                $current_rank = Rank::find($user->rank_id);
+                $next_rank = Rank::where('priority', $current_rank->priority + 1)->first();
+
+                if ($next_rank) {
+                    $progress->update(['current_xp' => $progress->current_xp + $xp - $progress->max_xp,
+                        "max_xp" => $progress->max_xp * 1.5]);
+                    $user->update(['rank_id' => $next_rank->id]);
+                } else {
+                    $progress->update(['current_xp' => $progress->max_xp]);
+                }
+            } else if ($progress->current_xp + $xp < 0 ) {
+                $current_rank = Rank::find($user->rank_id);
+                $previous_rank = Rank::where('priority', $current_rank->priority - 1)->first();
+
+                if ($previous_rank) {
+                    $progress->update(['current_xp' => 0]);
+                    $user->update(['rank_id' => $previous_rank->id]);
+                } else {
+                    $progress->update(['current_xp' => 0]);
+                }
+            } else {
+                $progress->update(['current_xp' => $progress->current_xp + $xp]);
+            }
+        } else {
+            rank_progresses::create(["user_id"=>$user->id,
+                "current_xp"=>0,
+                "max_xp"=>10,]);
+            $newboy_rank = Rank::where('priority', 1)->first();
+            $user->update(['rank_id' => $newboy_rank->id]);
+        }
+    }
 
     public function index($forum_id)
     {
@@ -22,27 +68,8 @@ class MessageController extends Controller
 
     public function statisticShow(Request $request)
     {
-        return MessageStatisticResource::collection(Message::all());
+        return MessageStatisticResource::collection(Message::orderBy('id', 'desc')->get());
     }
-
-    // public function store(MessagesCreateRequest $request)
-    // {
-    //     try {
-    //         $options = array(
-    //             'cluster' => 'eu',
-    //             'useTLS' => true,
-    //             'curl_options' => [
-    //                 CURLOPT_SSL_VERIFYHOST => 0,
-    //                 CURLOPT_SSL_VERIFYPEER => 0
-    //             ]
-    //         );
-
-    //     $pusher->trigger('my-channel', 'my-event', [
-
-    //         'message' => 'hello world'
-
-    //       ]);
-    // }
 
     public function store(MessagesCreateRequest $request)
     {
@@ -70,6 +97,8 @@ class MessageController extends Controller
                 ]
             );
 
+            Log::debug(env('PUSHER_APP_KEY'));
+
             $pusher = new Pusher(
                 env('PUSHER_APP_KEY'),
                 env('PUSHER_APP_SECRET'),
@@ -80,6 +109,8 @@ class MessageController extends Controller
             $pusher->trigger('forum-chat-' . $request->forum_id, 'new-post', [
                 'post' => new MessageResource($message)
             ]);
+
+        $this->Progress_make(auth()->guard('sanctum')->user(), 'MessageSent');
 
         return response()->json([
             'message' => new MessageResource($message),

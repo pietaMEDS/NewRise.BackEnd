@@ -6,6 +6,7 @@ use App\Models\achieve;
 use App\Models\Achievement;
 use App\Models\ProfileImage;
 use App\Models\Rank;
+use App\Models\rank_progresses;
 use App\Models\Role;
 use App\Models\RoleAccess;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class UserStatisticResource extends JsonResource
             "login" => $this->login,
             "role" => RoleResource::make(Role::find(RoleAccess::all()->firstWhere("user_id", '=', $this->id)->role_id)),
             "rank" => RankResource::make(Rank::find($this->rank_id)),
+            "progress" => ProgressResource::make(rank_progresses::all()->firstWhere("user_id",'=',$this->id)),
             "name" => $this->name,
             "avatar" => ProfileImageResource::make(ProfileImage::all()->firstWhere("user_id", '=', $this->id)),
             "achievements" => $this->achievements,

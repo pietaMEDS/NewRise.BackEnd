@@ -28,7 +28,7 @@ class UserController extends Controller
 
     public function statisticShow()
     {
-        return UserStatisticResource::collection(User::all());
+        return UserStatisticResource::collection(User::orderBy('id', 'desc')->get());
     }
 
     public function uploadAvatar(Request $request)
@@ -213,6 +213,7 @@ class UserController extends Controller
                 'type' => 'update_profileImage',
                 'data' => json_encode($avatar),
             ]);
+
         } elseif ($request['avatar'] != null) {
             $avatar = ProfileImage::create([
                 'user_id' => $user->id,
