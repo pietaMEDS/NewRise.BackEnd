@@ -69,7 +69,7 @@ Route::delete('/users/{id}', [UserController::class, "destroy"]);
 /*************
  * STATISTIC *
  *************/
-Route::post('/activitycount', [LogController::class, "activitiesCount"]);
+Route::post('/activitycount/{dates}', [LogController::class, "activitiesCount"]);
 Route::get('/statistic/messages', [MessageController::class, "statisticShow"]);
 Route::get('/statistic/users', [UserController::class, "statisticShow"]);
 Route::get('/logs/{id}', [LogController::class, "show"]);

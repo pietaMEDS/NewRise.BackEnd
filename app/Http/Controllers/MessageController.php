@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\MessageResource;
+use App\Models\achieve;
+use App\Models\Achievement;
 use App\Models\Message;
 use App\Http\Requests\MessagesCreateRequest;
 use App\Http\Resources\MessageStatisticResource;
@@ -16,6 +18,25 @@ use Pusher\Pusher;
 
 class MessageController extends Controller
 {
+    public function WS_Send($channel, $event, $data){
+        $options = array(
+            'cluster' => 'eu',
+            'useTLS' => true,
+            'curl_options' => [
+                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => 0
+            ]
+        );
+
+        $pusher = new Pusher(
+            env('PUSHER_APP_KEY'),
+            env('PUSHER_APP_SECRET'),
+            env('PUSHER_APP_ID'),
+            $options
+        );
+
+        $pusher->trigger($channel, $event, $data);
+    }
 
     public function Progress_make($user, $action){
         $progress_data = progress_actions::where("name", $action)->first();
@@ -58,6 +79,12 @@ class MessageController extends Controller
                 "max_xp"=>10,]);
             $newboy_rank = Rank::where('priority', 1)->first();
             $user->update(['rank_id' => $newboy_rank->id]);
+
+            $newPlayerAchievement = Achievement::where('name', 'First message')->first();
+
+            achieve::create(['user_id'=>$user->id, 'achievement_id'=>$newPlayerAchievement->id]);
+
+            $this->WS_Send('user-Notifier-'.$user->id, 'notify', ["type"=>"Achievement Unlocked", "message"=>$newPlayerAchievement->description]);
         }
     }
 
@@ -88,27 +115,9 @@ class MessageController extends Controller
             'data' => json_encode($message),
         ]);
 
-            $options = array(
-                'cluster' => 'eu',
-                'useTLS' => true,
-                'curl_options' => [
-                    CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => 0
-                ]
-            );
-
-            Log::debug(env('PUSHER_APP_KEY'));
-
-            $pusher = new Pusher(
-                env('PUSHER_APP_KEY'),
-                env('PUSHER_APP_SECRET'),
-                env('PUSHER_APP_ID'),
-                $options
-            );
-
-            $pusher->trigger('forum-chat-' . $request->forum_id, 'new-post', [
-                'post' => new MessageResource($message)
-            ]);
+        $this->WS_Send('forum-chat-' . $request->forum_id, 'new-post', [
+            'post' => new MessageResource($message)
+        ]);
 
         $this->Progress_make(auth()->guard('sanctum')->user(), 'MessageSent');
 
@@ -134,23 +143,7 @@ class MessageController extends Controller
             'data' => json_encode($message),
         ]);
 
-        $options = array(
-            'cluster' => 'eu',
-            'useTLS' => true,
-            'curl_options' => [
-                CURLOPT_SSL_VERIFYHOST => 0,
-                CURLOPT_SSL_VERIFYPEER => 0
-            ]
-        );
-
-        $pusher = new Pusher(
-            env('PUSHER_APP_KEY'),
-            env('PUSHER_APP_SECRET'),
-            env('PUSHER_APP_ID'),
-            $options
-        );
-
-        $pusher->trigger('forum-chat-' . $message->forum_id, 'updated-post', [
+        $this->WS_Send('forum-chat-' . $message->forum_id, 'updated-post', [
             'post' => new MessageResource($message)
         ]);
 
@@ -174,28 +167,9 @@ class MessageController extends Controller
             'data' => json_encode($message),
         ]);
 
-        Log::info(`Message with ID: ` . $id . ` has been successfully archived.
-        data: ` . $message);
-
-        $options = array(
-            'cluster' => 'eu',
-            'useTLS' => true,
-            'curl_options' => [
-                CURLOPT_SSL_VERIFYHOST => 0,
-                CURLOPT_SSL_VERIFYPEER => 0
-            ]
-        );
-
-        $pusher = new Pusher(
-            env('PUSHER_APP_KEY'),
-            env('PUSHER_APP_SECRET'),
-            env('PUSHER_APP_ID'),
-            $options
-        );
-
-        $pusher->trigger('forum-chat-' . $message->forum_id, 'delete-post', [
-            'post' => new MessageResource($message)
-        ]);
+       $this->WS_Send('forum-chat-' . $message->forum_id, 'delete-post', [
+           'post' => new MessageResource($message)
+       ]);
 
         return response()->json([
             'message' => 'Message deleted successfully.',

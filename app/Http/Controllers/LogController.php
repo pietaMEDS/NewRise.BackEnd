@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Logs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LogController extends Controller
 {
 
-    public function activitiesCount(Request $request){
-        return response()->json($request);
+    public function activitiesCount(String $dates){
+        Log::debug($dates);
+        return response()->json($dates);
     }
 
     public function show(Request $request, string $id)
