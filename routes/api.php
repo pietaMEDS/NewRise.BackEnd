@@ -6,8 +6,10 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CUXUIController;
 
 /**********
  *  GET *
@@ -44,6 +46,11 @@ Route::post('/admin/check', [UserController::class, 'AdminCheck'])->middleware('
 /* OTHER */
 Route::post('/messages', [MessageController::class, "store"]);
 Route::post('/forums/create', [ForumController::class, "store"]);
+Route::post('/report/create', [ReportController::class, "store"]);
+Route::get('/report/show/{link}', [ReportController::class, "show"]);
+Route::get('/reports/user', [ReportController::class, "showUser"]);
+Route::post('/report/send', [ReportController::class, "send"]);
+Route::post('CF_CUXUI', [CUXUIController::class, "index"]);
 
 /* WEBSOCKET TEST */
 Route::post('/broadcast-test', function (Request $request) {
