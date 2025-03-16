@@ -80,3 +80,4 @@ Route::post('/activitycount/{dates}', [LogController::class, "activitiesCount"])
 Route::get('/statistic/messages', [MessageController::class, "statisticShow"]);
 Route::get('/statistic/users', [UserController::class, "statisticShow"]);
 Route::get('/logs/{id}', [LogController::class, "show"]);
+Route::post('/CFCUXUI/stats', [CUXUIController::class, "stats"]);
