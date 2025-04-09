@@ -11,9 +11,15 @@ use Illuminate\Http\Request;
 
 class ForumController extends Controller
 {
-    public function index($theme_id)
+    public function index(Request $request, $theme_id)
     {
-        return ForumResource::collection(Forum::all()->where('theme_id', $theme_id));
+        $perPage = $request->query('per_page', 5);
+        $orderBy = $request->query('orderBy', 'views');
+        $sort = $request->query('sort', 'asc');
+        $forums = Forum::where('theme_id', $theme_id)
+            ->orderBy($orderBy, $sort)
+            ->paginate($perPage);
+        return ForumResource::collection($forums);
     }
 
     public function create()
@@ -24,8 +30,7 @@ class ForumController extends Controller
     public function store(CreateForumRequest $request)
     {
 
-        // Proceed with storing the resource
-        // Example: Validate and create a new forum
+
         $forum = Forum::create([
             'name' => $request->validated()['name'],
             'description' => $request->validated()['description'],

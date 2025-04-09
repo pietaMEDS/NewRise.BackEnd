@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\AccessController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\VersionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CUXUIController;
@@ -14,6 +17,11 @@ use App\Http\Controllers\CUXUIController;
 /**********
  *  GET *
  **********/
+
+Route::get('/up', function () {
+    return response()->json(['response'=>true]);
+});
+
 /* USERS */
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -28,6 +36,10 @@ Route::get('/users/profile/{userId}', [UserController::class, "profile"]);
 /* THEMES */
 Route::get('/themes', [ThemeController::class, "index"]);
 Route::get('/themes/{id}', [ThemeController::class, "show"]);
+
+/* NEWS */
+Route::get('/news', [NewsController::class, "index"]);
+Route::get('/newsPinned', [NewsController::class, "showPinnedNews"]);
 
 /* OTHER */
 Route::get('/messages/{forum_id}', [MessageController::class, "index"]);
@@ -81,3 +93,8 @@ Route::get('/statistic/messages', [MessageController::class, "statisticShow"]);
 Route::get('/statistic/users', [UserController::class, "statisticShow"]);
 Route::get('/logs/{id}', [LogController::class, "show"]);
 Route::post('/CFCUXUI/stats', [CUXUIController::class, "stats"]);
+Route::get('/version/{version}', [VersionController::class, "show"]);
+Route::post('/access', [AccessController::class, "store"]);
+Route::post('/page-time', [AccessController::class, 'pageTime']);
+
+Route::post('/isAdmin', [UserController::class, 'isAdmin'])->middleware('auth:sanctum');

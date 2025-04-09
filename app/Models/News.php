@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class progress_actions extends Model
+class News extends Model
 {
     protected $fillable = [
         'name',
-        'method',
-        'xp'
+        'text',
+        'user_id',
+        'status',
+        'isPinned',
     ];
 }

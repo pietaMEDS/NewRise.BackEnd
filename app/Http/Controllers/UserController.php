@@ -8,6 +8,7 @@ use App\Http\Requests\UserUpdateRequest;
 use App\Http\Resources\UserStatisticResource;
 use App\Models\Logs;
 use App\Models\ProfileImage;
+use App\Models\Rank;
 use App\Models\Role;
 use App\Models\RoleAccess;
 use App\Models\User;
@@ -146,17 +147,21 @@ class UserController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
+        $GuestRank = Rank::where('priority', -1)->first();
+
         $user = User::create([
             'name' => $validated['login'],
             'email' => $validated['email'],
             'login' => $validated['login'],
             'password' => bcrypt($validated['password']),
-            'rank_id' => 3
+            'rank_id' => $GuestRank->id,
         ]);
+
+        $userRole = Role::where('name', 'user')->first();
 
         RoleAccess::create([
             'user_id' => $user->id,
-            'role_id' => 1
+            'role_id' => $userRole->id,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -275,5 +280,25 @@ class UserController extends Controller
         }
 
         return response()->json(['status' => '403'], 403);
+    }
+
+    public function isAdmin(Request $request)
+    {
+        $user = auth()->guard('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(['isAdmin' => false], 401);
+        }
+
+        $role = RoleAccess::where('user_id', $user->id)
+            ->join('roles', 'role_accesses.role_id', '=', 'roles.id')
+            ->orderByDesc('roles.priority')
+            ->select('roles.*')
+            ->first();
+
+        return response()->json([
+            'isAdmin' => $role && $role->isAdmin,
+            'isModerator' => $role && ($role->isModerator || $role->isAdmin),
+        ]);
     }
 }

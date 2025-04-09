@@ -88,9 +88,13 @@ class MessageController extends Controller
         }
     }
 
-    public function index($forum_id)
+    public function index(Request $request, $forum_id)
     {
-        return MessageResource::collection(Message::where('forum_id', $forum_id)->get());
+        $perPage = $request->query('per_page', 10);
+        $messages = Message::where([['forum_id', $forum_id],['status', '!=', 'deleted']])
+            ->orderBy('created_at', 'DESC')
+            ->paginate($perPage);
+        return MessageResource::collection($messages);
     }
 
     public function statisticShow(Request $request)

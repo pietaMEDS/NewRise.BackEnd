@@ -49,6 +49,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'role_accesses', 'user_id', 'role_id');
+    }
+
     public function achievements(): BelongsToMany
     {
         return $this->belongsToMany(Achievement::class, 'achieves', 'user_id', 'achievement_id');

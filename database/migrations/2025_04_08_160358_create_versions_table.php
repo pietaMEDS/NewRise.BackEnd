@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('progress_actions', function (Blueprint $table) {
+        Schema::create('versions', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('description')->nullable();
+            $table->unsignedBigInteger('access_group');
+            $table->boolean('is_supported');
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('progress_actions');
+        Schema::dropIfExists('versions');
     }
 };
