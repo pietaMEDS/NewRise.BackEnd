@@ -8,14 +8,14 @@ class MessagesCreateRequest extends FormRequest
 {
     public function authorize()
     {
-        return true; // Настройте по мере необходимости для вашей логики авторизации
+        return true;
     }
 
     public function rules()
     {
         return [
-            'text' => 'string',
-            'forum_id' => 'exists:forums,id',
+            'text' => 'string|max:2000|required',
+            'forum_id' => 'exists:forums,id|required',
             'message_id' => 'nullable|exists:messages,id',
         ];
     }

@@ -56,6 +56,6 @@ class User extends Authenticatable
 
     public function achievements(): BelongsToMany
     {
-        return $this->belongsToMany(Achievement::class, 'achieves', 'user_id', 'achievement_id');
+        return $this->belongsToMany(Achievement::class, 'achieves', 'user_id', 'achievement_id')->orderBy('created_at', 'asc');
     }
 }

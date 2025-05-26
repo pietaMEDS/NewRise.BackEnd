@@ -33,7 +33,7 @@ class MessageResource extends JsonResource
             'status' => $this->status,
             'creator'=>UserResource::make(User::find($this->user_id)),
             'forum'=>ForumResource::make(Forum::find($this->forum_id)),
-            'reaction'=>MessageResource::make(Message::find($this->message_id)),
+            'reaction'=>MessageReplyResource::make(Message::find($this->message_id)),
             'created_at'=>$this->created_at,
             'updated_at'=>$this->updated_at,
         ];

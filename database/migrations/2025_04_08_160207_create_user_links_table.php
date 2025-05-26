@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_links', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('fingerprint_c');
+            $table->string('fingerprint_c')->nullable();
             $table->string('fingerprint_m')->nullable();
             $table->string('visitor_id');
             $table->timestamps();

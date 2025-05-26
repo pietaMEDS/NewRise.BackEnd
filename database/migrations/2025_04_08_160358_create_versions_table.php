@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->unsignedBigInteger('access_group');
+            $table->unsignedBigInteger('access_group')->nullable();
             $table->boolean('is_supported');
             $table->timestamps();
         });

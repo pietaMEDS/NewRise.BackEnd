@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('profile_images', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('path');
+            $table->string('path')->nullable();
+            $table->string('banner')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');

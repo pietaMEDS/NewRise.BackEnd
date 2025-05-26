@@ -27,7 +27,7 @@ class AccessController extends Controller
 
         if (!$request['primary_account']) {
             $mayAccount_finger_c = user_links::where('fingerprint_c', $request['fingerprint_c'])->first();
-            $mayAccount_visitor_id = user_links::where('visitor_id', $request['visitor_id'])->first();
+            $mayAccount_visitor_id = user_links::where('visitor_id', $request['visitor_id'])->orderBy('updated_at', 'DESC')->first();
 
             if ($mayAccount_finger_c && $mayAccount_visitor_id) {
                 if ($mayAccount_finger_c->user_id == $mayAccount_visitor_id->user_id) {
@@ -37,7 +37,8 @@ class AccessController extends Controller
                     $mayAccount_visitor_id->update(['visitor_id' => null]);
                 }
             } elseif ($mayAccount_finger_c) {
-                return response()->json(['status'=>'ask_verify', 'user_id' => $mayAccount_finger_c->user_id]);
+//                return response()->json(['status'=>'ask_verify', 'user_id' => $mayAccount_finger_c->user_id]);
+                return response()->json(['status'=>'success']);
             }elseif ($mayAccount_visitor_id) {
                 return response()->json(['status'=>'ask_verify', 'user_id' => $mayAccount_visitor_id->user_id]);
             }else{

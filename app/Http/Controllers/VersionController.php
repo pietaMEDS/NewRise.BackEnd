@@ -21,18 +21,14 @@ class VersionController extends Controller
             ], 500);
         }
 
-        // Получаем ID ролей пользователя
         $userRoles = $user ? $user->roles()->pluck('id')->toArray() : [];
 
-        // Делаем так, чтобы `access_group` тоже был массивом
-        $accessGroups = is_array($currentVersion->access_group) ?
-            $currentVersion->access_group :
-            [$currentVersion->access_group];
+        $accessGroups = $currentVersion->access_group;
 
-        $hasAccess = !empty($accessGroups) && !empty($userRoles) && array_intersect($userRoles, $accessGroups);
+        $hasAccess = $accessGroups == null ?? $accessGroups->contains($userRoles);
 
         if ($currentVersion->is_supported) {
-            if (!empty($accessGroups)) {
+            if (!$accessGroups) {
                 if ($hasAccess) {
                     return response()->json([
                         'status' => 'ok',
@@ -55,8 +51,7 @@ class VersionController extends Controller
             ]);
         }
 
-        // Версия не поддерживается
-        if (!empty($accessGroups)) {
+        if (!$accessGroups) {
             if ($hasAccess) {
                 return response()->json([
                     'status' => 'update_required',

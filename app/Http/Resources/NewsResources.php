@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Forum;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,11 +18,14 @@ class NewsResources extends JsonResource
     {
         return [
             'isPinned'=>$this->isPinned,
-            'type'=>$this->type,
+            'image'=>$this->image,
             'name' => $this->name,
             'text' => $this->text,
             'reactions' => null,
-            'last_message' => MessageResource::make(Message::where([['forum_id', $this->forum_id],['status', '!=', 'deleted']])->orderBy('created_at', 'desc')->first()),
+            'forum' => ForumResource::make(Forum::find($this->forum_id)),
+            'last_message' => MessageResource::make(Message::where('forum_id', $this->forum_id)->where(function ($query) {
+        $query->whereNull('status')->orWhere('status', '!=', 'deleted');
+    })->orderBy('created_at', 'desc')->first()),
         ];
     }
 }

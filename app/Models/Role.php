@@ -13,6 +13,7 @@ class Role extends Model
         'name',
         'description',
         'priority',
+        'icon',
         'isAdmin',
         'isModerator',
     ];

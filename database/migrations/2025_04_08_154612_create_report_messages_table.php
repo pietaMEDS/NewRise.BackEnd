@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('text');
             $table->unsignedBigInteger('report_id');
             $table->unsignedBigInteger('user_id');
-            $table->string('status');
+            $table->string('status')->nullable();
             $table->timestamps();
         });
     }

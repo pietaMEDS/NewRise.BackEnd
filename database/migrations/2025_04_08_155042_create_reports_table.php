@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('admin_id')->nullable();
             $table->string('theme');
             $table->string('text');
-            $table->string('status')->default('opened');
+            $table->string('status')->default('opened')->nullable();
             $table->string('link');
             $table->timestamps();
 

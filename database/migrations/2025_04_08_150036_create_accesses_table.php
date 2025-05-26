@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('accesses', function (Blueprint $table) {
             $table->id();
             $table->string('route')->nullable();
-            $table->string('fingerprint_m');
-            $table->string('fingerprint_c');
-            $table->string('visitor_id');
-            $table->double('visitor_score');
+            $table->string('fingerprint_m')->nullable();
+            $table->string('fingerprint_c')->nullable();
+            $table->string('visitor_id')->nullable();
+            $table->double('visitor_score')->nullable();
             $table->string('path_to');
             $table->string('path_from');
             $table->string('useragent');

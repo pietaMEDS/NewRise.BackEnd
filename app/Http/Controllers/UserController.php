@@ -21,6 +21,15 @@ use Pusher\Pusher;
 class UserController extends Controller
 {
 
+    private function deleteOldFileFromPublicStorage(?string $url): void
+    {
+        if ($url) {
+            $relativePath = str_replace('/storage/', '', parse_url($url, PHP_URL_PATH));
+            Storage::disk('public')->delete($relativePath);
+        }
+    }
+
+
     public function index()
     {
         return UserResource::collection(User::all());
@@ -51,6 +60,7 @@ class UserController extends Controller
 
             $avatar = ProfileImage::where('user_id', $user->id)->first();
             if ($avatar != null) {
+                $this->deleteOldFileFromPublicStorage($avatar->path);
                 $avatar->update(['path' => $publicUrl]);
 
                 Logs::create([
@@ -73,6 +83,50 @@ class UserController extends Controller
         }
 
         return response()->json(['path' => $publicUrl]);
+    }
+
+    public function uploadBanner(Request $request)
+    {
+        Log::info('Image Load:', $request->all());
+
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $user = auth()->guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if ($file = $request->file('file')) {
+            $imagePath = Storage::disk('public')->put('banners', $file);
+            $publicUrl = url(Storage::url($imagePath));
+
+            $avatar = ProfileImage::where('user_id', $user->id)->first();
+            if ($avatar != null) {
+                $this->deleteOldFileFromPublicStorage($avatar->path);
+                $avatar->update(['banner' => $publicUrl]);
+
+                Logs::create([
+                    'user_id' => $user->id,
+                    'type' => 'update_profileImage',
+                    'data' => json_encode($avatar),
+                ]);
+            } else {
+                $avatar = ProfileImage::create([
+                    'user_id' => $user->id,
+                    'banner' => $publicUrl
+                ]);
+
+                Logs::create([
+                    'user_id' => $user->id,
+                    'type' => 'create_profileImage',
+                    'data' => json_encode($avatar),
+                ]);
+            }
+        }
+
+        return response()->json(['banner' => $publicUrl]);
     }
 
     public function updateSelected(UserUpdateRequest $request, string $id)
@@ -147,7 +201,7 @@ class UserController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        $GuestRank = Rank::where('priority', -1)->first();
+        $GuestRank = Rank::where('priority', 0)->first();
 
         $user = User::create([
             'name' => $validated['login'],
@@ -273,21 +327,8 @@ class UserController extends Controller
     {
         $user = auth()->guard('sanctum')->user();
 
-        $role = Role::find(RoleAccess::where('user_id', $user->id)->first()->role_id);
-
-        if ($user && $role->priority > 20) { // Assuming rank_id 1 is for admin
-            return response()->json(['status' => '200'], 200);
-        }
-
-        return response()->json(['status' => '403'], 403);
-    }
-
-    public function isAdmin(Request $request)
-    {
-        $user = auth()->guard('sanctum')->user();
-
         if (!$user) {
-            return response()->json(['isAdmin' => false], 401);
+            return response()->json(['isAdmin' => false, 'isModerator' => false, 'isUser' => false], 401);
         }
 
         $role = RoleAccess::where('user_id', $user->id)

@@ -15,7 +15,8 @@ class ProfileImageResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "path"=>$this->path
+            "path"=>$this->path,
+            "banner"=>$this->banner
         ];
     }
 }

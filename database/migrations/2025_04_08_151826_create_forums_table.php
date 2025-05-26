@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('theme_id');
-            $table->integer('views');
-            $table->string('status');
-            $table->integer('posts_count');
+            $table->unsignedBigInteger('theme_id')->nullable();
+            $table->integer('views')->default(0);
+            $table->string('status')->nullable();
+            $table->integer('posts_count')->default(0);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');

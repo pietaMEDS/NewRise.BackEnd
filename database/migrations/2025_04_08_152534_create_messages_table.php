@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('message_id')->nullable();
             $table->unsignedBigInteger('forum_id');
             $table->unsignedBigInteger('user_id');
-            $table->string('status');
+            $table->string('status')->nullable();
             $table->timestamps();
 
             $table->foreign('message_id')->references('id')->on('messages');

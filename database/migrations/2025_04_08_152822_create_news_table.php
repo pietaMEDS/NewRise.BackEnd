@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('name');
-            $table->string('text');
-            $table->string('type');
-            $table->string('status');
+            $table->mediumText('text');
+            $table->string('image')->nullable();
+            $table->string('status')->nullable();
             $table->unsignedBigInteger('forum_id')->nullable();
             $table->boolean('isPinned')->default(false);
             $table->timestamps();

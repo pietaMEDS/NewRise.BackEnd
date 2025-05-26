@@ -34,6 +34,7 @@ Route::get('/users/profile', [UserController::class, "profile"]);
 Route::get('/users/profile/{userId}', [UserController::class, "profile"]);
 
 /* THEMES */
+Route::post('themes', [ThemeController::class, "store"]);
 Route::get('/themes', [ThemeController::class, "index"]);
 Route::get('/themes/{id}', [ThemeController::class, "show"]);
 
@@ -52,9 +53,12 @@ Route::get('/forums/{theme_id}', [ForumController::class, "index"]);
  ********/
 /* USERS */
 Route::post('/AvatarUpload', [UserController::class, "uploadAvatar"]);
+Route::post('/BannerUpload', [UserController::class, "uploadBanner"]);
 Route::post('/users/create', [UserController::class, "store"]);
 Route::post('/users/login', [UserController::class, "login"]);
 Route::post('/admin/check', [UserController::class, 'AdminCheck'])->middleware('auth:sanctum');
+Route::post('/news', [NewsController::class, "store"])->middleware('auth:sanctum');
+
 /* OTHER */
 Route::post('/messages', [MessageController::class, "store"]);
 Route::post('/forums/create', [ForumController::class, "store"]);
@@ -97,4 +101,4 @@ Route::get('/version/{version}', [VersionController::class, "show"]);
 Route::post('/access', [AccessController::class, "store"]);
 Route::post('/page-time', [AccessController::class, 'pageTime']);
 
-Route::post('/isAdmin', [UserController::class, 'isAdmin'])->middleware('auth:sanctum');
+Route::post('/isAdmin', [UserController::class, 'AdminCheck'])->middleware('auth:sanctum');

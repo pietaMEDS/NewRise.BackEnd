@@ -83,17 +83,21 @@ class MessageController extends Controller
             $newPlayerAchievement = Achievement::where('name', 'First message')->first();
 
             achieve::create(['user_id'=>$user->id, 'achievement_id'=>$newPlayerAchievement->id]);
-
-            $this->WS_Send('user-Notifier-'.$user->id, 'notify', ["type"=>"Achievement Unlocked", "message"=>$newPlayerAchievement->description]);
         }
     }
 
     public function index(Request $request, $forum_id)
     {
+
+
         $perPage = $request->query('per_page', 10);
-        $messages = Message::where([['forum_id', $forum_id],['status', '!=', 'deleted']])
+        $messages = Message::where('forum_id', $forum_id)
+            ->where(function ($query) {
+                $query->whereNull('status')->orWhere('status', '!=', 'deleted');
+            })
             ->orderBy('created_at', 'DESC')
             ->paginate($perPage);
+
         return MessageResource::collection($messages);
     }
 
