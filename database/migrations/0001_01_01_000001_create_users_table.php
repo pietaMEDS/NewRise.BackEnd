@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -24,6 +25,8 @@ return new class extends Migration
 
             $table->foreign('rank_id')->references('id')->on('ranks');
         });
+
+        \App\Models\User::create(['name' => 'pieta', 'login' => 'pieta', 'password' => Hash::make('123123'), 'rank_id' => 1, 'email' => 'maxibanp@gmail.com']);
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

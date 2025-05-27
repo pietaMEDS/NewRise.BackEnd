@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->string('text');
+            $table->mediumText('text');
             $table->unsignedBigInteger('message_id')->nullable();
             $table->unsignedBigInteger('forum_id');
             $table->unsignedBigInteger('user_id');

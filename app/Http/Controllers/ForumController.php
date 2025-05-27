@@ -22,15 +22,8 @@ class ForumController extends Controller
         return ForumResource::collection($forums);
     }
 
-    public function create()
-    {
-        //
-    }
-
     public function store(CreateForumRequest $request)
     {
-
-
         $forum = Forum::create([
             'name' => $request->validated()['name'],
             'description' => $request->validated()['description'],
@@ -55,27 +48,47 @@ class ForumController extends Controller
         return ForumResource::collection(Forum::all()->where('theme_id', $id));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
+        $forum = Forum::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:1000',
+        ]);
+
+        $forum->update($validated);
+
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'update_forum',
+            'data' => json_encode([
+                'forum_id' => $forum->id,
+                'updated_fields' => $validated,
+            ]),
+        ]);
+
+        return response()->json(new ForumResource($forum));
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        $forum = Forum::findOrFail($id);
+
+        $forum->delete();
+
+        Logs::create([
+            'user_id' => auth()->guard('sanctum')->user()->id,
+            'type' => 'delete_forum',
+            'data' => json_encode(['forum_id' => $id]),
+        ]);
+
+        return response()->noContent(); // 204
     }
+
 }

@@ -24,7 +24,6 @@ return new class extends Migration
 
         $designer = Achievement::where('name', 'Дизайнер')->first()->id;
 
-        Auto_achieve::create(['email' => 'maxibanp@gmail.com', 'achievement_id' => $designer]);
         Auto_achieve::create(['email' => 'saclorum@gmail.com', 'achievement_id' => $designer]);
         Auto_achieve::create(['email' => 'typolust@vk.com', 'achievement_id' => $designer]);
         Auto_achieve::create(['email' => 'malaysiahiki@gmail.com', 'achievement_id' => $designer]);
