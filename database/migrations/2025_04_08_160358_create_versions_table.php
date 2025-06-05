@@ -19,6 +19,12 @@ return new class extends Migration
             $table->boolean('is_supported');
             $table->timestamps();
         });
+
+        \App\Models\Version::create([
+            'name'=> "Release_0.6",
+            'description' => "Diplom Release_0.6",
+            'is_supported' => true,
+        ]);
     }
 
     /**

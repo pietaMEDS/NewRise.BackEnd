@@ -80,6 +80,8 @@ Route::post('/broadcast-test', function (Request $request) {
 /*******
  * PUT *
  *******/
+Route::put('users/update/bio', [UserController::class, "updateBio"])->middleware('auth:sanctum');
+Route::put('users/update/name', [UserController::class, "nameUpdate"])->middleware('auth:sanctum');
 Route::put('/users/update', [UserController::class, "update"])->middleware('auth:sanctum');
 Route::put('/users/update/{id}', [UserController::class, "updateSelected"])->middleware('auth:sanctum');
 Route::put('/messages/{id}/edit', [MessageController::class, "update"])->middleware('auth:sanctum');

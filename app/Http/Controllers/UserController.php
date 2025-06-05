@@ -9,6 +9,7 @@ use App\Http\Resources\UserStatisticResource;
 use App\Models\Logs;
 use App\Models\ProfileImage;
 use App\Models\Rank;
+use App\Models\rank_progresses;
 use App\Models\Role;
 use App\Models\RoleAccess;
 use App\Models\User;
@@ -131,25 +132,27 @@ class UserController extends Controller
 
     public function updateSelected(UserUpdateRequest $request, string $id)
     {
-        Log::info('Update selected user request data:', $request->all());
-
-        $requestData = $request->toArray()["user_data"]["data"];
         $user = User::find($id);
-
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-
         $user->update(array_filter([
-            'name' => $requestData['name'] ?? $user->name,
-            'email' => $requestData['email'] ?? $user->email
+            'name' => $request['name'] ?? $user->name,
+            'email' => $request['email'] ?? $user->email
         ]));
+
+        if ($request->has('progress')) {
+            $progress = rank_progresses::where('user_id', $id);
+            $progress->update(array_filter([
+                'current_xp' => $request->progress,
+            ]));
+        }
 
         $roleNow = RoleAccess::all()->firstWhere("user_id", '=', $user->id);
 
-        if ($roleNow->role_id != $requestData['role']['id']) {
+        if ($roleNow->role_id != $request['role']['id']) {
             $roleNow->update(array_filter([
-                'role_id' => $requestData['role']['id']
+                'role_id' => $request['role']['id']
             ]));
         }
 
@@ -246,6 +249,20 @@ class UserController extends Controller
             return UserResource::make(User::find(auth()->guard('sanctum')->id()));
     }
 
+    public function updateBio(Request $request)
+    {
+        $user = auth()->guard('sanctum')->user();
+
+        $validated = $request->validate([
+            'bio' => 'required|string|max:255'
+        ]);
+
+        $user->update(array_filter([
+            'bio' => $validated['bio']
+        ]));
+        return response()->json(['user' => UserResource::make($user)]);
+    }
+
     public function update(UserUpdateRequest $request)
     {
         Log::info('Update request data:', $request->all());
@@ -295,6 +312,20 @@ class UserController extends Controller
         return response()->json([
             'user' => UserResource::make($user),
         ]);
+    }
+
+    public function nameUpdate (Request $request){
+        $validated = $request->validate([
+            'name' => 'required|string|max:30',
+        ]);
+
+        $user = auth()->guard('sanctum')->user();
+
+        $user->update(array_filter([
+            'name' => $validated['name'] ?? $user->name,
+        ]));
+
+        return response()->json(['status' => 'success'], 200);
     }
 
     public function destroy(string $id)

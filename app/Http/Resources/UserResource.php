@@ -20,6 +20,7 @@ class UserResource extends JsonResource
             "id" => $this->id,
             "email" => $this->email,
             "login" => $this->login,
+            'bio' => $this->bio,
             "role" => RoleResource::make(Role::find(RoleAccess::all()->firstWhere("user_id", '=', $this->id)->role_id)),
             "rank" => RankResource::make(Rank::find($this->rank_id)),
             "name" => $this->name,
