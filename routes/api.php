@@ -67,6 +67,9 @@ Route::get('/report/show/{link}', [ReportController::class, "show"]);
 Route::get('/reports/user', [ReportController::class, "showUser"]);
 Route::post('/report/send', [ReportController::class, "send"]);
 Route::post('CF_CUXUI', [CUXUIController::class, "index"]);
+Route::post('/news/{id}/pin', [NewsController::class, "pin"]);
+Route::post('/news/settings', [NewsController::class, "settings"]);
+Route::post('/news/textEdit', [NewsController::class, "textEdit"]);
 
 /* WEBSOCKET TEST */
 Route::post('/broadcast-test', function (Request $request) {

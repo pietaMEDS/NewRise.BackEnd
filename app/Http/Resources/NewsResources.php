@@ -17,6 +17,7 @@ class NewsResources extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'isPinned'=>$this->isPinned,
             'image'=>$this->image,
             'name' => $this->name,

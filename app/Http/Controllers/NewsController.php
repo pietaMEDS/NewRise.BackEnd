@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\NewsResources;
 use App\Models\Forum;
+use App\Models\Logs;
 use App\Models\Message;
 use App\Models\News;
 use Illuminate\Http\Request;
@@ -63,5 +64,69 @@ class NewsController extends Controller
 
         return response()->json(NewsResources::make($news), 201);
 
+    }
+
+    public function pin(string $id){
+        $user = auth()->guard('sanctum')->user();
+
+        $news = News::find($id);
+
+        if($news->isPinned){
+            $news->isPinned = 0;
+        }
+        else{
+            $news->isPinned = 1;
+        }
+        $news->save();
+
+        Logs::create([
+            'user_id'=> $user->id,
+            'type' => "news_pin_change",
+            'data' => $news->get(),
+        ]);
+
+        return response()->json(NewsResources::make($news), 200);
+    }
+
+    public function settings(Request $request){
+        $user = auth()->guard('sanctum')->user();
+
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:news,id',
+            'name' => 'required|string|max:255',
+            'image' => 'required|string',
+        ]);
+
+        $news = News::find($validated['id']);
+        $news->name = $validated['name'];
+        $news->image = $validated['image'];
+        $news->save();
+
+        Logs::create([
+            'user_id'=> $user->id,
+            'type' => "news_edit",
+            'data' => $news->get(),
+        ]);
+        return response()->json(NewsResources::make($news), 200);
+    }
+
+    public function textEdit(Request $request){
+        $user = auth()->guard('sanctum')->user();
+
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:news,id',
+            'text' => 'required|string',
+        ]);
+
+        $news = News::find($validated['id']);
+        $news->text = $validated['text'];
+        $news->save();
+
+        Logs::create([
+            'user_id'=> $user->id,
+            'type' => "news_edit",
+            'data' => $news->get(),
+        ]);
+        return response()->json(NewsResources::make($news), 200);
     }
 }
