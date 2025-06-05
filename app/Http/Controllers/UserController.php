@@ -105,7 +105,7 @@ class UserController extends Controller
 
             $avatar = ProfileImage::where('user_id', $user->id)->first();
             if ($avatar != null) {
-                $this->deleteOldFileFromPublicStorage($avatar->path);
+                $this->deleteOldFileFromPublicStorage($avatar->banner);
                 $avatar->update(['banner' => $publicUrl]);
 
                 Logs::create([
